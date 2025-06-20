@@ -1,0 +1,11 @@
+.choice-list {
+  margin-top: 2rem;
+  width: 100%;
+}
+
+.no-choices {
+  margin-top: 2rem;
+  text-align: center;
+  color: var(--gray);
+  font-style: italic;
+}

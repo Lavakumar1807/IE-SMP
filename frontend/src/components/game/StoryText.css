@@ -1,0 +1,28 @@
+.story-text {
+  font-size: 1.15rem;
+  line-height: 1.8;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1.8rem;
+  border-radius: 12px;
+  border-left: 4px solid var(--secondary);
+  position: relative;
+  min-height: 200px;
+}
+
+.text-cursor {
+  animation: blink 1s infinite;
+  color: var(--secondary);
+  font-weight: bold;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@media (max-width: 768px) {
+  .story-text {
+    padding: 1.4rem;
+    font-size: 1.05rem;
+  }
+}
