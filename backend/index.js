@@ -1,6 +1,6 @@
 const express = require('express');
-const stories = require('./storylines'); // Import story data
 const cors = require('cors');
+const { stories, addStoryNode, saveStories } = require('./storylines');
 
 const app = express();
 const PORT = 5000;
@@ -8,84 +8,78 @@ const PORT = 5000;
 app.use(cors());
 app.use(express.json());
 
-// Root route
-app.get("/", (req, res) => {
-  res.send("Welcome to the adventure game API");
-});
+app.get('/', (_req, res) => res.send('Welcome to the adventure game API'));
 
-// Get all storyline names
-app.get('/storylines', (req, res) => {
-  res.status(200).json(Object.keys(stories));
-});
+app.get('/storylines', (_req, res) =>
+  res.status(200).json(Object.keys(stories))
+);
 
-// Get full story by name
 app.get('/story/:name', (req, res) => {
-  const { name } = req.params;
-  const story = stories[name];
-  if (story) {
-    res.status(200).json(story);
-  } else {
-    res.status(404).json({ message: "Story not found" });
-  }
+  const s = stories[req.params.name];
+  if (!s) return res.status(404).json({ message: 'Story not found' });
+  res.json(s);
 });
 
-// Get specific node in a specific story
 app.get('/story/:name/:id', (req, res) => {
-  const { name, id } = req.params;
-  const story = stories[name];
-  if (story) {
-    const node = story.find(n => n.id === parseInt(id));
-    if (node) res.status(200).json(node);
-    else res.status(404).json({ message: "Node not found" });
-  } else {
-    res.status(404).json({ message: "Story not found" });
-  }
+  const s = stories[req.params.name];
+  if (!s) return res.status(404).json({ message: 'Story not found' });
+  const node = s.find(n => n.id === +req.params.id);
+  if (!node) return res.status(404).json({ message: 'Node not found' });
+  res.json(node);
 });
 
-// POST - Add new node to a story
 app.post('/story/:name', (req, res) => {
-  const { name } = req.params;
-  const story = stories[name];
-  const newNode = req.body;
+  const name = req.params.name.trim();
+  const { title, text, choices } = req.body;
 
-  if (!story) {
-    return res.status(404).json({ message: "Storyline not found" });
+  if (!title || !text || !Array.isArray(choices) || !choices.length) {
+    return res.status(400).json({ message: 'Missing required fields' });
   }
 
-  newNode.id = story.length + 1;
-  story.push(newNode);
-  res.status(201).json(newNode);
+  const nextId = stories[name] ? stories[name].length + 1 : 1;
+  const newNode = { id: nextId, title, text, choices };
+
+  addStoryNode(name, newNode);
+  res
+    .status(201)
+    .json({ message: `Added node ${nextId} to "${name}"`, node: newNode });
 });
 
-// PUT - Update a node in a story
 app.put('/story/:name/:id', (req, res) => {
   const { name, id } = req.params;
-  const updatedData = req.body;
-  const story = stories[name];
+  const s = stories[name];
+  if (!s) return res.status(404).json({ message: 'Story not found' });
 
-  if (!story) return res.status(404).json({ message: "Storyline not found" });
+  const idx = s.findIndex(n => n.id === +id);
+  if (idx === -1) return res.status(404).json({ message: 'Node not found' });
 
-  const index = story.findIndex(node => node.id === parseInt(id));
-  if (index === -1) return res.status(404).json({ message: "Node not found" });
+  stories[name][idx] = { ...stories[name][idx], ...req.body };
+  saveStories();
 
-  stories[name][index] = { ...stories[name][index], ...updatedData };
-  res.status(200).json(stories[name][index]);
+  res.json({ message: `Node ${id} updated`, node: stories[name][idx] });
 });
 
-// DELETE - Remove a node from a story
+app.delete('/story/:name', (req, res) => {
+  const { name } = req.params;
+  if (!stories[name]) {
+    return res.status(404).json({ message: 'Story not found' });
+  }
+  delete stories[name];
+  saveStories();     
+  return res.status(204).send();
+});
+
 app.delete('/story/:name/:id', (req, res) => {
   const { name, id } = req.params;
-  const story = stories[name];
+  const s = stories[name];
+  if (!s) return res.status(404).json({ message: 'Story not found' });
 
-  if (!story) return res.status(404).json({ message: "Storyline not found" });
+  const idx = s.findIndex(n => n.id === +id);
+  if (idx === -1) return res.status(404).json({ message: 'Node not found' });
 
-  const index = story.findIndex(node => node.id === parseInt(id));
-  if (index === -1) return res.status(404).json({ message: "Node not found" });
-
-  story.splice(index, 1);
+  s.splice(idx, 1);
+  saveStories();
   res.status(204).send();
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on PORT: ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

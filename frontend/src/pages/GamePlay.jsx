@@ -58,7 +58,7 @@ const GamePlay = () => {
     
     try {
       const res = await axios.get(`${API_URL}/story/${storyId}/${nextId}`);
-      console.log('Next node:', res.data); // Debug log
+      console.log('Next node:', res.data); 
       setCurrentNode(res.data);
       setError('');
     } catch (err) {

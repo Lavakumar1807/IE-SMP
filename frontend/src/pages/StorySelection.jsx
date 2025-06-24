@@ -64,15 +64,15 @@ const StorySelection = () => {
   return (
     <div className="page story-selection-page">
       <Header title="Choose Your Adventure" />
-      
+
       <main className="selection-content">
         <h2>Select a Story</h2>
         <p className="subtitle">Each journey offers unique challenges and outcomes</p>
-        
+
         <div className="stories-grid">
           {stories.map((story) => (
-            <Card 
-              key={story} 
+            <> <Card
+              key={story}
               className="story-card"
               onClick={() => handleSelectStory(story)}
             >
@@ -81,12 +81,21 @@ const StorySelection = () => {
               </div>
               <h3>{formatStoryName(story)}</h3>
               <p>Embark on a journey filled with mystery and choices that shape your destiny.</p>
-              <Button variant="outline" className="play-button">Begin Adventure</Button>
+              <Button variant="outline" className="play-button">Begin Adventure</Button><br/>
             </Card>
+               </>
           ))}
+          <Card className="story-card add-new" onClick={() => navigate('/add-story')}>
+                <h3>+ Add New Story</h3>
+                <p>Create your own adventure!</p>
+                <Button variant="outline">Add Story</Button>
+              </Card>
         </div>
+        <br/>
+        <Button onClick={() => navigate('/edit-story')}>Edit Stories</Button>
+
       </main>
-      
+
       <Footer />
     </div>
   );

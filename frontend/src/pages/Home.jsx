@@ -17,7 +17,7 @@ const Home = () => {
             <p>Step into immersive worlds where every decision shapes your story. Will you uncover hidden truths, or succumb to the shadows?</p>
             <div className="hero-actions">
               <Link to="/select-story">
-                <Button variant="primary">Begin Your Journey</Button>
+                <Button variant="primary" >Begin Your Journey</Button>
               </Link>
               <Link to="/about">
                 <Button variant="outline">Learn More</Button>

@@ -1,0 +1,53 @@
+.addstory-container {
+  max-width: 640px;
+  margin: 2rem auto;
+  padding: 1rem;
+}
+
+.addstory-container h1 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+}
+
+.addstory-container form label {
+  display: block;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.addstory-container form input[type="text"],
+
+.addstory-container form textarea {
+  width: 100%;
+  padding: 0.7rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-top: 0.4rem;
+  font-size: 1rem;
+}
+
+.addstory-container form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.choices-block {
+  margin: 1.5rem 0;
+}
+
+.choice-row {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 0.8rem;
+}
+
+.choice-row input {
+  flex: 1;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+}
