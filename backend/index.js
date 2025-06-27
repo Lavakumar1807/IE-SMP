@@ -1,7 +1,10 @@
 const express = require('express');
 const cors = require('cors');
-const { stories, addStoryNode, saveStories } = require('./storylines');
+const connectDB = require('./config/db');
+const Story = require('./models/Story');
+require('dotenv').config();
 
+connectDB(); 
 const app = express();
 const PORT = 5000;
 
@@ -10,75 +13,61 @@ app.use(express.json());
 
 app.get('/', (_req, res) => res.send('Welcome to the adventure game API'));
 
-app.get('/storylines', (_req, res) =>
-  res.status(200).json(Object.keys(stories))
-);
-
-app.get('/story/:name', (req, res) => {
-  const s = stories[req.params.name];
-  if (!s) return res.status(404).json({ message: 'Story not found' });
-  res.json(s);
+app.get('/storylines', async (_req, res) => {
+  const keys = await Story.distinct('storyKey');
+  res.json(keys);
 });
 
-app.get('/story/:name/:id', (req, res) => {
-  const s = stories[req.params.name];
-  if (!s) return res.status(404).json({ message: 'Story not found' });
-  const node = s.find(n => n.id === +req.params.id);
-  if (!node) return res.status(404).json({ message: 'Node not found' });
-  res.json(node);
+app.get('/story/:name', async (req, res) => {
+  const docs = await Story.find({ storyKey: req.params.name }).sort({ id: 1 });
+  if (!docs.length) return res.status(404).json({ message: 'Story not found' });
+  res.json(docs);
 });
 
-app.post('/story/:name', (req, res) => {
-  const name = req.params.name.trim();
+app.get('/story/:name/:id', async (req, res) => {
+  const doc = await Story.findOne({ storyKey: req.params.name, id: +req.params.id });
+  if (!doc) return res.status(404).json({ message: 'Node not found' });
+  res.json(doc);
+});
+
+app.post('/story/:name', async (req, res) => {
   const { title, text, choices } = req.body;
-
-  if (!title || !text || !Array.isArray(choices) || !choices.length) {
+  if (!title || !text || !Array.isArray(choices) || !choices.length)
     return res.status(400).json({ message: 'Missing required fields' });
-  }
 
-  const nextId = stories[name] ? stories[name].length + 1 : 1;
-  const newNode = { id: nextId, title, text, choices };
+  const last = await Story.find({ storyKey: req.params.name })
+                          .sort({ id: -1 })
+                          .limit(1);
+  const nextId = last.length ? last[0].id + 1 : 1;
 
-  addStoryNode(name, newNode);
-  res
-    .status(201)
-    .json({ message: `Added node ${nextId} to "${name}"`, node: newNode });
+  const doc = await Story.create({
+    storyKey: req.params.name,
+    id: nextId,
+    title,
+    text,
+    choices
+  });
+  res.status(201).json({ message: `Added node ${nextId}`, node: doc });
 });
 
-app.put('/story/:name/:id', (req, res) => {
-  const { name, id } = req.params;
-  const s = stories[name];
-  if (!s) return res.status(404).json({ message: 'Story not found' });
-
-  const idx = s.findIndex(n => n.id === +id);
-  if (idx === -1) return res.status(404).json({ message: 'Node not found' });
-
-  stories[name][idx] = { ...stories[name][idx], ...req.body };
-  saveStories();
-
-  res.json({ message: `Node ${id} updated`, node: stories[name][idx] });
+app.put('/story/:name/:id', async (req, res) => {
+  const doc = await Story.findOneAndUpdate(
+    { storyKey: req.params.name, id: +req.params.id },
+    req.body,
+    { new: true }
+  );
+  if (!doc) return res.status(404).json({ message: 'Node not found' });
+  res.json({ message: 'Node updated', node: doc });
 });
 
-app.delete('/story/:name', (req, res) => {
-  const { name } = req.params;
-  if (!stories[name]) {
-    return res.status(404).json({ message: 'Story not found' });
-  }
-  delete stories[name];
-  saveStories();     
-  return res.status(204).send();
+app.delete('/story/:name', async (req, res) => {
+  await Story.deleteMany({ storyKey: req.params.name });
+  res.status(204).send();
 });
 
-app.delete('/story/:name/:id', (req, res) => {
-  const { name, id } = req.params;
-  const s = stories[name];
-  if (!s) return res.status(404).json({ message: 'Story not found' });
-
-  const idx = s.findIndex(n => n.id === +id);
-  if (idx === -1) return res.status(404).json({ message: 'Node not found' });
-
-  s.splice(idx, 1);
-  saveStories();
+app.delete('/story/:name/:id', async (req, res) => {
+  const { deletedCount } = await Story.deleteOne({ storyKey: req.params.name, id: +req.params.id });
+  if (!deletedCount) return res.status(404).json({ message: 'Node not found' });
   res.status(204).send();
 });
 
